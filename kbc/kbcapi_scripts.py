@@ -865,7 +865,7 @@ def get_oauth_consumers(stack: str, master_token: str, component_id: str):
             return response.json()
 
 
-def create_oauth_consumer(stack: str, master_token: str, payload: dict):
+def create_oauth_consumer(stack: str, master_token: str, payload: dict, **kwargs):
     headers = {
         'Content-Type': 'application/json',
         'X-KBC-ManageApiToken': master_token,
