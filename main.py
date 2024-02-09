@@ -33,7 +33,7 @@ def render_responses(consumer_responses: dict, type: str = 'json'):
                         if type == 'json':
                             st.json(response['response'], expanded=True)
                         else:
-                            st.table(response['response'])
+                            st.dataframe(response['response'], use_container_width=True, )
                     else:
                         st.error(response['response'])
 
@@ -106,6 +106,7 @@ def display_main_content():
     if st.button("List Consumer Details", type="primary"):
         consumer_responses = _perform_consumer_operation(stack_tokens_json, 'GET', component_id=component_id)
     render_responses(consumer_responses)
+    enabled_stacks = [stack for stack, response in consumer_responses.items() if response['status'] == 'success']
 
     st.divider()
     st.subheader("Update OAuth Consumer")
@@ -171,12 +172,26 @@ def display_main_content():
                  help="This updates the stack permissions "
                       "and will add any of the stacks where the consumer is registered"):
         vendor, app = component_id.split('.')
-        succesful_stacks = [stack for stack, response in consumer_responses.items() if response['status'] == 'success']
+
         resp = kbc.kbcapi_scripts.developer_portal_patch_app_permissions(st.session_state['dev_portal_access_token'],
                                                                          vendor,
-                                                                         component_id, succesful_stacks)
+                                                                         component_id, enabled_stacks)
         st.success('Permissions updated successfully')
         st.json(resp['permissions'])
+
+    st.divider()
+    st.subheader("Did you set redirect URLs?")
+    st.markdown("Make sure you set all the redirect URLs in the respective app registration.")
+    if st.button("Show redirect URLs", type="primary"):
+        stack_urls = []
+        for stack in enabled_stacks:
+            stack_urls.append(f"https://oauth.{stack}/authorize/{component_id}/callback")
+
+        st.dataframe({"urls": stack_urls}, use_container_width=True, column_config={
+            "urls": st.column_config.TextColumn(
+                "Redirect URLs",
+                disabled=True)
+        })
 
 
 def main():
