@@ -2,6 +2,7 @@ import json
 import os
 import time
 import urllib
+from typing import List
 
 import requests
 from kbcstorage.base import Endpoint
@@ -936,7 +937,7 @@ def developer_portal_get_permissions(access_token: str, vendor: str, component_i
 
 
 def developer_portal_patch_app_permissions(access_token: str, vendor: str, component_id: str,
-                                           permitted_stacks: list[str]):
+                                           permitted_stacks: List[str]):
     """
 
     Args:
