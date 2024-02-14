@@ -6,6 +6,7 @@ import typing
 import streamlit as st
 
 import kbc.kbcapi_scripts
+import tabs.encryptor
 
 image_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -86,7 +87,7 @@ def display_main_content():
     stack_tokens_json = json.loads(stack_tokens)
     if not stack_tokens:
         st.warning("To continue, please enter your Stack Tokens.")
-        st.stop()
+        return
 
     st.divider()
     st.subheader("Inspect OAuth Consumer setup")
@@ -125,16 +126,16 @@ def display_main_content():
             payload_json = json.loads(consumer_payload)
         except json.JSONDecodeError:
             st.error("The payload is not a valid JSON.")
-            st.stop()
+            return
 
         if not payload_json:
             st.error("Please provide the payload.")
-            st.stop()
+            return
 
         if operation == 'PATCH' and payload_json and not 'app_secret' in payload_json:
             st.error("Please provide the app_secret in the payload, "
                      "otherwise it will be rewritten with invalid value on PATCH")
-            st.stop()
+            return
 
         if st.button("EXECUTE", type="primary"):
             filtered_stack_tokens = {stack: stack_tokens_json[stack] for stack in selected_stacks}
@@ -147,7 +148,7 @@ def display_main_content():
 
     if not (consumer_responses and component_id):
         st.warning("Please fill in the Component ID and list the consumer details first.")
-        st.stop()
+        return
 
     with st.container(border=True):
         st.markdown("#### Login")
@@ -195,12 +196,12 @@ def display_main_content():
 
 
 def main():
-    tab1, tab2 = st.tabs(["OAuth Manager", "TBD"])
+    tab1, tab2 = st.tabs(["OAuth Manager", "Encryption API"])
     with tab1:
         display_main_content()
 
     with tab2:
-        st.markdown("""tbd functionality""")
+        tabs.encryptor.display_content()
 
     hide_streamlit_style = """
         <style>

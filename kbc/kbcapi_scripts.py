@@ -2,7 +2,7 @@ import json
 import os
 import time
 import urllib
-from typing import List
+from typing import List, Optional
 
 import requests
 from kbcstorage.base import Endpoint
@@ -975,3 +975,44 @@ def developer_portal_patch_app_permissions(access_token: str, vendor: str, compo
         raise e
     else:
         return response.json()
+
+
+def encrypt(string_to_encrypt: str, component_id: Optional[str] = None, project_id: Optional[str] = None,
+            config_id: Optional[str] = None, stack: str = 'keboola.com') -> str:
+    """
+    Encrypts a string using the encryption API.
+    Args:
+        string_to_encrypt:
+        component_id:
+        project_id:
+        config_id:
+        stack:
+
+    Returns:
+
+    """
+    url = f"https://encryption.{stack}/encrypt"
+    if config_id and not project_id:
+        raise ValueError("Project ID must be provided if config ID is provided.")
+
+    params = {}
+    if project_id:
+        params["projectId"] = project_id
+
+    if config_id:
+        params["configId"] = config_id
+
+    if component_id:
+        params["componentId"] = component_id
+
+    if not params:
+        raise ValueError("At least one of the following must be provided: project_id, config_id, component_id")
+
+    headers = {"Content-Type": "text/plain"}
+
+    response = requests.post(url,
+                             data=string_to_encrypt,
+                             params=params,
+                             headers=headers)
+    response.raise_for_status()
+    return response.text
