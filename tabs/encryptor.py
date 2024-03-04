@@ -21,7 +21,7 @@ def display_content():
 
     if not (project_id or component_id or config_id):
         st.warning("Please fill in the Project ID, Component ID or Config ID first.")
-        st.stop()
+        return
 
     if data and st.button("Encrypt", type="primary"):
         result = kbc.kbcapi_scripts.encrypt(data, component_id, project_id, config_id, stack)

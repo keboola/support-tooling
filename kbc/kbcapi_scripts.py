@@ -1016,3 +1016,73 @@ def encrypt(string_to_encrypt: str, component_id: Optional[str] = None, project_
                              headers=headers)
     response.raise_for_status()
     return response.text
+
+
+def add_feature(stack: str, master_token, project_id: str, feature: str):
+    headers = {
+        'Content-Type': 'application/json',
+        'X-KBC-ManageApiToken': master_token,
+    }
+
+    data = {
+        "feature": feature
+    }
+
+    response = requests.post(
+        f'https://connection.{stack}/manage/projects/{project_id}/features',
+        headers=headers, json=data)
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        raise e
+    else:
+        return response.json()
+
+
+def remove_feature(stack: str, master_token, project_id: str, feature: str):
+    headers = {
+        'Content-Type': 'application/json',
+        'X-KBC-ManageApiToken': master_token,
+    }
+
+    response = requests.delete(
+        f'https://connection.{stack}/manage/projects/{project_id}/features/{feature}',
+        headers=headers)
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        raise e
+    else:
+        return response.json()
+
+
+def list_project_features(stack: str, master_token, project_id: str):
+    headers = {
+        'Content-Type': 'application/json',
+        'X-KBC-ManageApiToken': master_token
+    }
+
+    response = requests.get(
+        f'https://connection.{stack}/manage/projects/{project_id}',
+        headers=headers)
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        raise e
+    else:
+        return response.json()['features']
+def list_features(stack: str, master_token):
+    headers = {
+        'Content-Type': 'application/json',
+        'X-KBC-ManageApiToken': master_token
+    }
+
+    response = requests.get(
+        f'https://connection.{stack}/manage/features?type=project',
+        headers=headers)
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        raise e
+    else:
+        return response.json()

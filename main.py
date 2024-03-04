@@ -6,7 +6,7 @@ import typing
 import streamlit as st
 
 import kbc.kbcapi_scripts
-import tabs.encryptor
+from tabs import encryptor, projectmgr
 
 image_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -196,12 +196,15 @@ def display_main_content():
 
 
 def main():
-    tab1, tab2 = st.tabs(["OAuth Manager", "Encryption API"])
+    tab1, tab2, tab3 = st.tabs(["OAuth Manager", "Encryption API", "Project Features"])
     with tab1:
         display_main_content()
 
     with tab2:
-        tabs.encryptor.display_content()
+        encryptor.display_content()
+
+    with tab3:
+        projectmgr.display_content()
 
     hide_streamlit_style = """
         <style>
