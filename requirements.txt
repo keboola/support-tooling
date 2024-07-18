@@ -2,6 +2,6 @@ streamlit
 pandas
 openai==1.1.1
 langchain
-git+https://github.com/keboola/sapi-python-client.git
+kbcstorage
 streamlit-aggrid
 sentence_transformers
