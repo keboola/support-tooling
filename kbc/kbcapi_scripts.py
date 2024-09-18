@@ -1071,6 +1071,8 @@ def list_project_features(stack: str, master_token, project_id: str):
         raise e
     else:
         return response.json()['features']
+
+
 def list_features(stack: str, master_token):
     headers = {
         'Content-Type': 'application/json',
@@ -1086,3 +1088,32 @@ def list_features(stack: str, master_token):
         raise e
     else:
         return response.json()
+
+
+def list_all_components(only_keboola: bool = False) -> dict[str, dict]:
+    """
+    Get all components from the Storage API index call
+    Returns:
+
+    """
+    stacks = ["eu-central-1.keboola.com",
+              "keboola.com",
+              "north-europe.azure.keboola.com",
+              "europe-west2.gcp.keboola.com",
+              "europe-west3.gcp.keboola.com",
+              "us-east4.gcp.keboola.com"]
+    all_components = dict()
+    for stack in stacks:
+        url = f"https://connection.{stack}/v2/storage"
+        response = requests.get(url)
+        response.raise_for_status()
+        components = response.json()['components']
+        if components:
+            all_components = {**all_components, **{component['id']: component for component in components}}
+        keboola_vendors = ['keboola.', 'kds-team.']
+        if only_keboola:
+            # remove all components whose key starts with vendor
+            for vendor in keboola_vendors:
+                all_components = {k: v for k, v in all_components.items() if k.startswith(vendor)}
+
+    return all_components
