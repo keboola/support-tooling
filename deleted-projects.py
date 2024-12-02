@@ -21,7 +21,8 @@ def get_headers(token):
 def get_deleted_projects(api_url, token):
     response = requests.get(
         f"{api_url}/deleted-projects",
-        headers=get_headers(token)
+        headers=get_headers(token),
+        params={"limit": "1000"}
     )
     return response.json()
 
