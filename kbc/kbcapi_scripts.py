@@ -752,6 +752,23 @@ def get_organization(master_token, region, org_id):
         return response.json()
 
 
+def get_project_detail(stack, master_token, project_id):
+    headers = {
+        'Content-Type': 'application/json',
+        'X-KBC-ManageApiToken': master_token,
+    }
+
+    response = requests.get(
+        f'https://connection.{stack}/manage/projects/' + str(project_id),
+        headers=headers)
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        raise e
+    else:
+        return response.json()
+
+
 def get_schedules(region: str, master_token: str):
     def _get_paged_schedules(region: str, token: str) -> list:
         headers = {
