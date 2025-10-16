@@ -1117,10 +1117,7 @@ def list_organizations_by_stack(stack: str, master_token: str):
         f'https://connection.{stack}/manage/organizations',
         headers=headers,
     )
-    try:
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        raise e
+    response.raise_for_status()
     data = response.json()
     if isinstance(data, dict) and 'organizations' in data:
         return data['organizations']
@@ -1137,10 +1134,8 @@ def get_organization_by_stack(stack: str, master_token: str, organization_id: st
         f'https://connection.{stack}/manage/organizations/{organization_id}',
         headers=headers,
     )
-    try:
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        raise e
+    response.raise_for_status()
+
     return response.json()
 
 

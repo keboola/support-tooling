@@ -168,14 +168,14 @@ def _render_single_project_flow(stack: str, manage_token: str, operation: str, f
             else:
                 result = kbc.kbcapi_scripts.remove_feature(stack, manage_token, project_id, final_feature)
                 st.success(f"Removed feature `{final_feature}` from project `{project_id}`.")
+
+            st.json(result)
         except requests.HTTPError as error:
             st.error(f"Operation failed: {_http_error_details(error)}")
             return
         except requests.RequestException as error:
             st.error(f"Operation failed: {error}")
             return
-
-        st.json(result)
 
 
 def _render_organization_flow(stack: str, manage_token: str, operation: str, final_feature: str) -> None:
