@@ -95,7 +95,7 @@ def display_content():
         st.error(f"Unable to load available features: {error}")
         return
 
-    feature_names = [feature.get('name') for feature in features if feature.get('name')]
+    feature_names = [feature.get('name', '') for feature in features if feature.get('name', '')]
     selected_feature = None
     if feature_names:
         selected_feature = st.selectbox("Feature", feature_names, key='pgm_feature')
