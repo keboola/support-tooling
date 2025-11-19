@@ -1107,6 +1107,38 @@ def list_features(stack: str, master_token):
         return response.json()
 
 
+def list_organizations_by_stack(stack: str, master_token: str):
+    headers = {
+        'Content-Type': 'application/json',
+        'X-KBC-ManageApiToken': master_token,
+    }
+
+    response = requests.get(
+        f'https://connection.{stack}/manage/organizations',
+        headers=headers,
+    )
+    response.raise_for_status()
+    data = response.json()
+    if isinstance(data, dict) and 'organizations' in data:
+        return data['organizations']
+    return data
+
+
+def get_organization_by_stack(stack: str, master_token: str, organization_id: str):
+    headers = {
+        'Content-Type': 'application/json',
+        'X-KBC-ManageApiToken': master_token,
+    }
+
+    response = requests.get(
+        f'https://connection.{stack}/manage/organizations/{organization_id}',
+        headers=headers,
+    )
+    response.raise_for_status()
+
+    return response.json()
+
+
 def list_all_components(only_keboola: bool = False) -> dict[str, dict]:
     """
     Get all components from the Storage API index call
