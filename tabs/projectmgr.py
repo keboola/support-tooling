@@ -63,6 +63,7 @@ def _format_project_option(project: dict) -> str:
 
 
 def display_content():
+    # 1. Token Management Section
     stack_selection = st.selectbox("Stack", STACK_OPTIONS, key='pgm_stack')
     if stack_selection == "Other (manual entry)":
         raw_stack = st.text_input("Enter custom stack URL", key='pgm_custom_stack')
@@ -84,6 +85,26 @@ def display_content():
         st.warning("Please fill in the Manage Token first.")
         return
 
+    st.divider()
+
+    # 2. Project/Organization Selection Section
+    scope = st.radio("Apply to", ["Single project", "Organization projects"], key='pgm_scope')
+
+    if scope == "Single project":
+        selected_project, project_id = _render_single_project_selection(stack, manage_token)
+        if not selected_project:
+            return
+        target_projects = None
+    else:
+        selected_organization, target_projects = _render_organization_selection(stack, manage_token)
+        if not selected_organization:
+            return
+        project_id = None
+        selected_project = None
+
+    st.divider()
+
+    # 3. Feature Selection Section
     operation = st.selectbox('Operation', ['ADD', 'REMOVE'], key='pgm_operation')
 
     try:
@@ -114,35 +135,33 @@ def display_content():
 
     st.divider()
 
-    scope = st.radio("Apply to", ["Single project", "Organization projects"], key='pgm_scope')
-
+    # 4. Application Section
     if scope == "Single project":
-        _render_single_project_flow(stack, manage_token, operation, final_feature)
+        _render_single_project_actions(stack, manage_token, operation, final_feature, project_id, selected_project)
     else:
-        _render_organization_flow(stack, manage_token, operation, final_feature)
+        _render_organization_actions(stack, manage_token, operation, final_feature, target_projects)
 
 
-def _render_single_project_flow(stack: str, manage_token: str, operation: str, final_feature: str) -> None:
+def _render_single_project_selection(stack: str, manage_token: str) -> tuple:
+    """Renders project selection UI and returns (selected_project, project_id)"""
     project_id = st.text_input("Project ID", key='pgm_project_id')
 
     if not project_id:
         st.info("Please enter the Project ID to continue.")
-        return
+        return None, None
 
     try:
         selected_project = kbc.kbcapi_scripts.get_project_detail(stack, manage_token, project_id)
     except requests.HTTPError as error:
         st.error(f"Unable to load project `{project_id}`: {_http_error_details(error)}")
-        return
+        return None, None
     except requests.RequestException as error:
         st.error(f"Unable to load project `{project_id}`: {error}")
-        return
+        return None, None
 
     st.markdown(f"**Selected project name**: **`{selected_project['name']}`**")
     organization = selected_project.get('organization', {})
     st.markdown(f"**Organization name**: **`{organization.get('name', 'N/A')}`**")
-
-    st.divider()
 
     if st.button("Get project features", type="primary", key='pgm_get_features'):
         try:
@@ -154,43 +173,23 @@ def _render_single_project_flow(stack: str, manage_token: str, operation: str, f
         else:
             st.json(result)
 
-    st.divider()
-
-    if st.button("Apply feature change", type="primary", key='pgm_single_apply'):
-        if not final_feature:
-            st.warning("Please select or enter a feature before performing the action.")
-            return
-
-        try:
-            if operation == 'ADD':
-                result = kbc.kbcapi_scripts.add_feature(stack, manage_token, project_id, final_feature)
-                st.success(f"Added feature `{final_feature}` to project `{project_id}`.")
-            else:
-                result = kbc.kbcapi_scripts.remove_feature(stack, manage_token, project_id, final_feature)
-                st.success(f"Removed feature `{final_feature}` from project `{project_id}`.")
-
-            st.json(result)
-        except requests.HTTPError as error:
-            st.error(f"Operation failed: {_http_error_details(error)}")
-            return
-        except requests.RequestException as error:
-            st.error(f"Operation failed: {error}")
-            return
+    return selected_project, project_id
 
 
-def _render_organization_flow(stack: str, manage_token: str, operation: str, final_feature: str) -> None:
+def _render_organization_selection(stack: str, manage_token: str) -> tuple:
+    """Renders organization selection UI and returns (selected_organization, target_projects)"""
     try:
         organizations = kbc.kbcapi_scripts.list_organizations_by_stack(stack, manage_token)
     except requests.HTTPError as error:
         st.error(f"Unable to load organizations: {_http_error_details(error)}")
-        return
+        return None, None
     except requests.RequestException as error:
         st.error(f"Unable to load organizations: {error}")
-        return
+        return None, None
 
     if not organizations:
         st.info("No organizations available for this manage token.")
-        return
+        return None, None
 
     selected_organization = st.selectbox(
         "Organization",
@@ -202,26 +201,26 @@ def _render_organization_flow(stack: str, manage_token: str, operation: str, fin
 
     if not selected_organization:
         st.info("Select an organization to continue.")
-        return
+        return None, None
 
     organization_id = selected_organization.get('id')
     if not organization_id:
         st.error("The selected organization is missing an ID.")
-        return
+        return None, None
 
     try:
         organization_detail = kbc.kbcapi_scripts.get_organization_by_stack(stack, manage_token, organization_id)
     except requests.HTTPError as error:
         st.error(f"Unable to load organization detail: {_http_error_details(error)}")
-        return
+        return None, None
     except requests.RequestException as error:
         st.error(f"Unable to load organization detail: {error}")
-        return
+        return None, None
 
     projects = organization_detail.get('projects') or []
     if not projects:
         st.info("The selected organization does not have any projects.")
-        return
+        return selected_organization, []
 
     project_rows = []
     for project in projects:
@@ -253,6 +252,35 @@ def _render_organization_flow(stack: str, manage_token: str, operation: str, fin
 
     st.caption(f"{len(target_projects)} project(s) selected for the operation.")
 
+    return selected_organization, target_projects
+
+
+def _render_single_project_actions(stack: str, manage_token: str, operation: str, final_feature: str, project_id: str, selected_project: dict) -> None:
+    """Renders action buttons for single project operations"""
+    if st.button("Apply feature change", type="primary", key='pgm_single_apply'):
+        if not final_feature:
+            st.warning("Please select or enter a feature before performing the action.")
+            return
+
+        try:
+            if operation == 'ADD':
+                result = kbc.kbcapi_scripts.add_feature(stack, manage_token, project_id, final_feature)
+                st.success(f"Added feature `{final_feature}` to project `{project_id}`.")
+            else:
+                result = kbc.kbcapi_scripts.remove_feature(stack, manage_token, project_id, final_feature)
+                st.success(f"Removed feature `{final_feature}` from project `{project_id}`.")
+
+            st.json(result)
+        except requests.HTTPError as error:
+            st.error(f"Operation failed: {_http_error_details(error)}")
+            return
+        except requests.RequestException as error:
+            st.error(f"Operation failed: {error}")
+            return
+
+
+def _render_organization_actions(stack: str, manage_token: str, operation: str, final_feature: str, target_projects: list) -> None:
+    """Renders action buttons for organization operations"""
     if st.button("Apply feature change", type="primary", key='pgm_multi_apply'):
         if not final_feature:
             st.warning("Please select or enter a feature before performing the action.")
