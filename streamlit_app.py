@@ -132,11 +132,6 @@ def display_main_content():
             st.error("Please provide the payload.")
             return
 
-        if operation == 'PATCH' and payload_json and not 'app_secret' in payload_json:
-            st.error("Please provide the app_secret in the payload, "
-                     "otherwise it will be rewritten with invalid value on PATCH")
-            return
-
         if st.button("EXECUTE", type="primary"):
             filtered_stack_tokens = {stack: stack_tokens_json[stack] for stack in selected_stacks}
             consumer_responses = _perform_consumer_operation(filtered_stack_tokens, operation, payload=payload_json,
