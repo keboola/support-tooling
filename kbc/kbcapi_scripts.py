@@ -801,19 +801,6 @@ def get_schedules(region: str, master_token: str):
     return _get_paged_schedules(region, master_token)
 
 
-def _convert_payload_to_camel_case(payload: dict):
-    """Converts the payload keys to camelCase"""
-
-    def snake_to_camel(name: str):
-        # split underscore using split
-        temp = name.split('_')
-
-        # joining result
-        return temp[0] + ''.join(ele.title() for ele in temp[1:])
-
-    return {snake_to_camel(k): v for k, v in payload.items()}
-
-
 def list_oauth_consumers(stack: str, master_token: str, filter_response: bool = True):
     """
     Get all oatuh consumers
@@ -839,10 +826,7 @@ def list_oauth_consumers(stack: str, master_token: str, filter_response: bool = 
 
     response_json = response.json()
     if filter_response:
-        if 'gcp' in stack:
-            return [{"component_id": r["componentId"], "name": r["friendlyName"]} for r in response_json]
-        else:
-            return [{"component_id": r["id"], "name": r["friendly_name"]} for r in response_json]
+        return [{"component_id": r["componentId"], "name": r["friendlyName"]} for r in response_json]
     else:
         return response_json
 
@@ -887,8 +871,6 @@ def create_oauth_consumer(stack: str, master_token: str, payload: dict, **kwargs
         'Content-Type': 'application/json',
         'X-KBC-ManageApiToken': master_token,
     }
-    if 'gcp' in stack:
-        payload = _convert_payload_to_camel_case(payload)
     response = requests.post(
         f'https://oauth.{stack}/manage',
         headers=headers, json=payload)
@@ -905,8 +887,6 @@ def patch_oauth_consumer(stack: str, master_token: str, component_id: str, paylo
         'Content-Type': 'application/json',
         'X-KBC-ManageApiToken': master_token,
     }
-    if 'gcp' in stack:
-        payload = _convert_payload_to_camel_case(payload)
     response = requests.patch(
         f'https://oauth.{stack}/manage/{component_id}',
         headers=headers, json=payload)
